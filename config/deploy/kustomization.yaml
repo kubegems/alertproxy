@@ -1,0 +1,18 @@
+resources:
+- deployment.yaml
+- service.yaml
+namespace: kubegems-monitoring
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- files:
+  - alertproxy.yaml
+  name: alertproxy
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: alertproxy
+  newName: kubegems/alertproxy
+  newTag: v0.1.0

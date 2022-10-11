@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertproxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alertproxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: alertproxy
+        app.kubernetes.io/name: alertproxy
+    spec:
+      containers:
+        - image: alertproxy:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "serve"
+            - "--config"
+            - "config/alertproxy.yaml"
+          name: alertproxy
+          ports:
+            - containerPort: 9094
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /config
+              name: config
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: alertproxy
+          name: config

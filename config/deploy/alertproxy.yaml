@@ -1,0 +1,28 @@
+listen: ":9094"
+proxyTemplates:
+  - type: feishu
+    template: |
+      {
+        "msg_type": "interactive",
+        "card": {
+          "config": {
+            "wide_screen_mode": true
+          },
+          "elements": [
+            {
+              "tag": "div",
+              "text": {
+                "content": "{{ .Alert.Annotations.message }}\n{{ range .At }}<at id={{ . }}></at>{{ end }}",
+                "tag": "lark_md"
+              }
+            }
+          ],
+          "header": {
+            "template": "red",
+            "title": {
+              "content": "【告警】{{ .Alert.Labels.gems_alertname }}",
+              "tag": "plain_text"
+            }
+          }
+        }
+      }

@@ -1,0 +1,92 @@
+apiVersion: v1
+data:
+  alertproxy.yaml: |
+    listen: ":9094"
+    proxyTemplates:
+      - type: feishu
+        template: |
+          {
+            "msg_type": "interactive",
+            "card": {
+              "config": {
+                "wide_screen_mode": true
+              },
+              "elements": [
+                {
+                  "tag": "div",
+                  "text": {
+                    "content": "{{ .Alert.Annotations.message }}\n{{ range .At }}<at id={{ . }}></at>{{ end }}",
+                    "tag": "lark_md"
+                  }
+                }
+              ],
+              "header": {
+                "template": "red",
+                "title": {
+                  "content": "【告警】{{ .Alert.Labels.gems_alertname }}",
+                  "tag": "plain_text"
+                }
+              }
+            }
+          }
+kind: ConfigMap
+metadata:
+  name: alertproxy
+  namespace: kubegems-monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: alertproxy
+  name: alertproxy
+  namespace: kubegems-monitoring
+spec:
+  ports:
+  - name: http
+    port: 9094
+    protocol: TCP
+    targetPort: 9094
+  selector:
+    app.kubernetes.io/name: alertproxy
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertproxy
+  namespace: kubegems-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alertproxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: alertproxy
+        app.kubernetes.io/name: alertproxy
+    spec:
+      containers:
+      - args:
+        - serve
+        - --config
+        - config/alertproxy.yaml
+        image: kubegems/alertproxy:v0.1.0
+        imagePullPolicy: IfNotPresent
+        name: alertproxy
+        ports:
+        - containerPort: 9094
+          name: http
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: alertproxy
+        name: config
