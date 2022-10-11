@@ -22,7 +22,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sync"
 	"text/template"
 	"time"
 
@@ -78,31 +77,25 @@ func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sap := NewSingleAlertProxy(tpl)
-	wg := sync.WaitGroup{}
-	for _, v := range alerts.Alerts {
-		wg.Add(1)
-		go func(alert Alert) {
-			defer wg.Done()
-			req, err := sap.RenderRequest(r, alert)
-			if err != nil {
-				log.Println(errors.Wrap(err, "render request"))
-				return
-			}
+	for _, alert := range alerts.Alerts {
+		req, err := sap.RenderRequest(r, alert)
+		if err != nil {
+			log.Println(errors.Wrap(err, "render request"))
+			return
+		}
 
-			resp, err := p.Client.Do(req)
-			if err != nil {
-				log.Println(errors.Wrap(err, "do request"))
-				return
-			}
-			if resp.StatusCode != http.StatusOK {
-				bts, _ := io.ReadAll(resp.Body)
-				log.Println(errors.Wrap(fmt.Errorf(string(bts)), "response error"))
-				return
-			}
-			log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
-		}(v)
+		resp, err := p.Client.Do(req)
+		if err != nil {
+			log.Println(errors.Wrap(err, "do request"))
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			bts, _ := io.ReadAll(resp.Body)
+			log.Println(errors.Wrap(fmt.Errorf(string(bts)), "response error"))
+			return
+		}
+		log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
 	}
-	wg.Wait()
 	ResponseOK(w, "ok")
 }
 
