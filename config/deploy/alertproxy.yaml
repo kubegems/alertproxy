@@ -12,7 +12,7 @@ proxyTemplates:
             {
               "tag": "div",
               "text": {
-                "content": "{{ .Alert.Annotations.message }}\n{{ range .At }}<at id={{ . }}></at>{{ end }}",
+                "content": "**告警级别**: {{ .Alert.Labels.severity }}\n**告警内容**: {{ .Alert.Annotations.message }}\n{{ range .At }}<at id={{ . }}></at>{{ end }}",
                 "tag": "lark_md"
               }
             }
