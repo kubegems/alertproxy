@@ -10,9 +10,53 @@ proxyTemplates:
           },
           "elements": [
             {
+              "fields": [
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**🕐 开始时间: **{{ .Alert.StartsAt.Format "2006 01 02 15:04:05" }}",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**{{ if eq .Alert.Labels.severity "critical" }}🟣{{ else }}🔴{{ end }} 级别: **{{ .Alert.Labels.severity }}",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**☸️ 集群: **{{ .Alert.Labels.cluster }}",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**🏠 命名空间: **{{ .Alert.Labels.gems_namespace }}",
+                    "tag": "lark_md"
+                  }
+                }{{ $length := len .At }}{{ if gt $length 0 }},
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**👤 责任人: **{{ range .At }}<at id={{ . }}></at>{{ end }}",
+                    "tag": "lark_md"
+                  }
+                }
+                {{- end -}}
+              ],
+              "tag": "div"
+            },          
+            {
+              "tag": "hr"
+            },
+            {
               "tag": "div",
               "text": {
-                "content": "**告警级别**: {{ .Alert.Labels.severity }}\n**告警内容**: {{ .Alert.Annotations.message }}\n{{ range .At }}<at id={{ . }}></at>{{ end }}",
+                "content": "{{ .Alert.Annotations.message }}",
                 "tag": "lark_md"
               }
             }
@@ -20,7 +64,7 @@ proxyTemplates:
           "header": {
             "template": "red",
             "title": {
-              "content": "【告警】{{ .Alert.Labels.gems_alertname }}",
+              "content": "🔥 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}",
               "tag": "plain_text"
             }
           }

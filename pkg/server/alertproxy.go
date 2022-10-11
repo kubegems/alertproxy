@@ -22,9 +22,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"text/template"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"kubegems.io/alertproxy/config"
@@ -81,19 +83,27 @@ func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 		req, err := sap.RenderRequest(r, alert)
 		if err != nil {
 			log.Println(errors.Wrap(err, "render request"))
-			return
+			continue
 		}
 
-		resp, err := p.Client.Do(req)
-		if err != nil {
-			log.Println(errors.Wrap(err, "do request"))
-			return
+		if err := retry.Do(func() error {
+			resp, err := p.Client.Do(req)
+			if err != nil {
+				log.Println(errors.Wrap(err, "do request"))
+				return nil
+			}
+			if resp.StatusCode != http.StatusOK {
+				bts, _ := io.ReadAll(resp.Body)
+				// should retry
+				if strings.Contains(string(bts), "too many request") {
+					return errors.Wrap(fmt.Errorf(string(bts)), "response error")
+				}
+			}
+			return nil
+		}, retry.Attempts(5), retry.Delay(5*time.Second)); err != nil {
+			log.Println(err)
 		}
-		if resp.StatusCode != http.StatusOK {
-			bts, _ := io.ReadAll(resp.Body)
-			log.Println(errors.Wrap(fmt.Errorf(string(bts)), "response error"))
-			return
-		}
+
 		log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
 	}
 	ResponseOK(w, "ok")

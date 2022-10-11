@@ -34,7 +34,9 @@ const alertProxyFeishu = "feishu"
 func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error) {
 	query := oldReq.URL.Query()
 	f.URL = query.Get("url")
-	f.At = strings.Split(query.Get("at"), ",")
+	if query.Get("at") != "" {
+		f.At = strings.Split(query.Get("at"), ",")
+	}
 
 	obj := struct {
 		Alert
