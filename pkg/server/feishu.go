@@ -110,6 +110,9 @@ func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Re
 	return req, nil
 }
 
+// {"StatusCode":0,"StatusMessage":"","code":9499,"msg":"too many request"}
+// {"StatusCode":0,"StatusMessage":"","code":19007,"msg":"Bot Not Enabled"}
+// {"StatusCode":0,"StatusMessage":"","code":19021,"msg":"sign match fail or timestamp is not within one hour from current time"}
 func (f *FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err error) {
 	obj := FeishuResp{}
 	bts, err := io.ReadAll(resp.Body)
@@ -120,8 +123,8 @@ func (f *FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err 
 		return false, err
 	}
 	if obj.StatusCode != 0 || obj.Code != 0 {
-		if strings.Contains(string(obj.Msg), "too many request") {
-			return shouldRetry, errors.New(obj.String())
+		if obj.Code == 9499 { // too many request
+			return true, errors.New(obj.String())
 		} else {
 			return false, errors.New(obj.String())
 		}
