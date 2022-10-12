@@ -18,18 +18,57 @@ package server
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"text/template"
+	"time"
+
+	"github.com/pkg/errors"
 )
 
 type FeishuRobot struct {
 	*template.Template
-	URL string
-	At  []string
+	URL        string
+	At         []string
+	SignSecret string
+}
+
+type FeishuResp struct {
+	// success
+	StatusCode    int    `json:"StatusCode"`
+	StatusMessage string `json:"StatusMessage"`
+
+	// failed
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+}
+
+func (resp FeishuResp) String() string {
+	bts, _ := json.Marshal(resp)
+	return string(bts)
 }
 
 const alertProxyFeishu = "feishu"
+
+// copy from feishu
+func GenSign(secret string, timestamp int64) (string, error) {
+	//timestamp + key 做sha256, 再进行base64 encode
+	stringToSign := fmt.Sprintf("%v", timestamp) + "\n" + secret
+	var data []byte
+	h := hmac.New(sha256.New, []byte(stringToSign))
+	_, err := h.Write(data)
+	if err != nil {
+		return "", err
+	}
+	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return signature, nil
+}
 
 func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error) {
 	query := oldReq.URL.Query()
@@ -40,10 +79,23 @@ func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Re
 
 	obj := struct {
 		Alert
-		At []string
+		// for template
+		At        []string
+		Timestamp int64
+		Sign      string
 	}{
 		Alert: alert,
 		At:    f.At,
+	}
+
+	f.SignSecret = query.Get("signSecret")
+	if f.SignSecret != "" {
+		obj.Timestamp = time.Now().Unix()
+		sign, err := GenSign(f.SignSecret, obj.Timestamp)
+		if err != nil {
+			return nil, errors.Wrap(err, "gen sign")
+		}
+		obj.Sign = sign
 	}
 
 	buf := bytes.NewBuffer([]byte{})
@@ -56,4 +108,23 @@ func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Re
 	}
 	req.Header.Set("Content-Type", "application/json")
 	return req, nil
+}
+
+func (f *FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err error) {
+	obj := FeishuResp{}
+	bts, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(bts, &obj); err != nil {
+		return false, err
+	}
+	if obj.StatusCode != 0 || obj.Code != 0 {
+		if strings.Contains(string(obj.Msg), "too many request") {
+			return shouldRetry, errors.New(obj.String())
+		} else {
+			return false, errors.New(obj.String())
+		}
+	}
+	return false, nil
 }

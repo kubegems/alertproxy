@@ -18,11 +18,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"strings"
 	"text/template"
 	"time"
 
@@ -34,6 +31,8 @@ import (
 
 type SingleAlertProxy interface {
 	RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error)
+	// if err not null, should retry
+	CheckResponse(resp *http.Response) (bool, error)
 }
 
 type Alertproxy struct {
@@ -82,8 +81,8 @@ func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 	for _, alert := range alerts.Alerts {
 		req, err := sap.RenderRequest(r, alert)
 		if err != nil {
-			log.Println(errors.Wrap(err, "render request"))
-			continue
+			ResponseError(w, errors.Wrap(err, "render request"))
+			return
 		}
 
 		if err := retry.Do(func() error {
@@ -92,19 +91,20 @@ func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 				log.Println(errors.Wrap(err, "do request"))
 				return nil
 			}
-			if resp.StatusCode != http.StatusOK {
-				bts, _ := io.ReadAll(resp.Body)
-				// should retry
-				if strings.Contains(string(bts), "too many request") {
-					return errors.Wrap(fmt.Errorf(string(bts)), "response error")
-				}
+
+			shouldRetry, err := sap.CheckResponse(resp)
+			if shouldRetry {
+				return errors.Wrap(err, "check response")
+			}
+			if err != nil {
+				log.Println(err)
+			} else {
+				log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
 			}
 			return nil
 		}, retry.Attempts(5), retry.Delay(5*time.Second)); err != nil {
 			log.Println(err)
 		}
-
-		log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
 	}
 	ResponseOK(w, "ok")
 }
