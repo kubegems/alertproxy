@@ -79,6 +79,8 @@ func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	sap := NewSingleAlertProxy(tpl)
 	for _, alert := range alerts.Alerts {
+		start := alert.StartsAt.In(time.Local)
+		alert.StartsAt = &start
 		req, err := sap.RenderRequest(r, alert)
 		if err != nil {
 			ResponseError(w, errors.Wrap(err, "render request"))

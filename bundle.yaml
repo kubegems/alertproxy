@@ -7,29 +7,29 @@ data:
     true\n          },\n          \"elements\": [\n            {\n              \"fields\":
     [\n                {\n                  \"is_short\": true,\n                  \"text\":
     {\n                    \"content\": \"**\U0001F550 开始时间: **{{ .Alert.StartsAt.Format
-    \"2006 01 02 15:04:05\" }}\",\n                    \"tag\": \"lark_md\"\n                  }\n
-    \               },\n                {\n                  \"is_short\": true,\n
-    \                 \"text\": {\n                    \"content\": \"**{{ if eq .Alert.Labels.severity
-    \"critical\" }}\U0001F7E3{{ else }}\U0001F534{{ end }} 级别: **{{ .Alert.Labels.severity
-    }}\",\n                    \"tag\": \"lark_md\"\n                  }\n                },\n
-    \               {\n                  \"is_short\": true,\n                  \"text\":
-    {\n                    \"content\": \"**☸️ 集群: **{{ .Alert.Labels.cluster }}\",\n
-    \                   \"tag\": \"lark_md\"\n                  }\n                },\n
-    \               {\n                  \"is_short\": true,\n                  \"text\":
-    {\n                    \"content\": \"**\U0001F3E0 命名空间: **{{ .Alert.Labels.gems_namespace
-    }}\",\n                    \"tag\": \"lark_md\"\n                  }\n                }{{
-    $length := len .At }}{{ if gt $length 0 }},\n                {\n                  \"is_short\":
-    true,\n                  \"text\": {\n                    \"content\": \"**\U0001F464
-    责任人: **{{ range .At }}<at id={{ . }}></at>{{ end }}\",\n                    \"tag\":
-    \"lark_md\"\n                  }\n                }\n                {{- end -}}\n
-    \             ],\n              \"tag\": \"div\"\n            },          \n            {\n
-    \             \"tag\": \"hr\"\n            },\n            {\n              \"tag\":
-    \"div\",\n              \"text\": {\n                \"content\": \"{{ .Alert.Annotations.message
-    }}\",\n                \"tag\": \"lark_md\"\n              }\n            }\n
-    \         ],\n          \"header\": {\n            \"template\": \"red\",\n            \"title\":
-    {\n              \"content\": \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
-    }}\",\n              \"tag\": \"plain_text\"\n            }\n          }\n        }\n
-    \     }\n"
+    \"2006-01-02T15:04:05Z07:00\" }}\",\n                    \"tag\": \"lark_md\"\n
+    \                 }\n                },\n                {\n                  \"is_short\":
+    true,\n                  \"text\": {\n                    \"content\": \"**{{
+    if eq .Alert.Labels.severity \"critical\" }}\U0001F7E3{{ else }}\U0001F534{{ end
+    }} 级别: **{{ .Alert.Labels.severity }}\",\n                    \"tag\": \"lark_md\"\n
+    \                 }\n                },\n                {\n                  \"is_short\":
+    true,\n                  \"text\": {\n                    \"content\": \"**☸️
+    集群: **{{ .Alert.Labels.cluster }}\",\n                    \"tag\": \"lark_md\"\n
+    \                 }\n                },\n                {\n                  \"is_short\":
+    true,\n                  \"text\": {\n                    \"content\": \"**\U0001F3E0
+    命名空间: **{{ .Alert.Labels.gems_namespace }}\",\n                    \"tag\": \"lark_md\"\n
+    \                 }\n                }{{ $length := len .At }}{{ if gt $length
+    0 }},\n                {\n                  \"is_short\": true,\n                  \"text\":
+    {\n                    \"content\": \"**\U0001F464 责任人: **{{ range .At }}<at id={{
+    . }}></at>{{ end }}\",\n                    \"tag\": \"lark_md\"\n                  }\n
+    \               }\n                {{- end -}}\n              ],\n              \"tag\":
+    \"div\"\n            },          \n            {\n              \"tag\": \"hr\"\n
+    \           },\n            {\n              \"tag\": \"div\",\n              \"text\":
+    {\n                \"content\": \"{{ .Alert.Annotations.message }}\",\n                \"tag\":
+    \"lark_md\"\n              }\n            }\n          ],\n          \"header\":
+    {\n            \"template\": \"red\",\n            \"title\": {\n              \"content\":
+    \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}\",\n              \"tag\":
+    \"plain_text\"\n            }\n          }\n        }\n      }\n"
 kind: ConfigMap
 metadata:
   name: alertproxy
@@ -73,7 +73,7 @@ spec:
         - serve
         - --config
         - config/alertproxy.yaml
-        image: kubegems/alertproxy:v0.1.0
+        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.2.0
         imagePullPolicy: IfNotPresent
         name: alertproxy
         ports:

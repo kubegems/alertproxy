@@ -15,11 +15,13 @@ COPY ./ .
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o alertproxy main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.16
 WORKDIR /
+RUN apk --update add tzdata && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && \
+    apk del tzdata && \
+    rm -rf /var/cache/apk/*
 COPY --from=builder /workspace/alertproxy .
-USER 65532:65532
 
 ENTRYPOINT ["/alertproxy"]

@@ -76,7 +76,7 @@ endif
 
 .PHONY: bundle
 bundle: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/deploy && kustomize edit set image alertproxy=${IMG}
+	cd config/deploy && kustomize edit set image alertproxy=${IMG2}
 	kustomize build config/deploy > bundle.yaml
 
 .PHONY: deploy
