@@ -27,7 +27,8 @@ alertproxy-7d6cddbc96-brcr8   1/1     Running   0          1m
 ### Send alerts to alertproxy
 Use feishu as example:
 1. http api
-POST `${alertproxy_addr}?type=feishu&url=&{feishu_robot_addr}&at=${user_id}&signSecret=${sign_secret}`
+
+`POST ${alertproxy_addr}?type=feishu&url=&{feishu_robot_addr}&at=${user_id}&signSecret=${sign_secret}`
 
 body should be an alertmanager alert format, eg:
 ```json
