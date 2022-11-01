@@ -27,9 +27,9 @@ import (
 )
 
 func Run(ctx context.Context, opts *config.ProxyConfigs) error {
-	proxy := Alertproxy{
-		ProxyConfigs: opts,
-		Client:       http.Client{Timeout: 10 * time.Second},
+	Init(opts)
+	proxy := AlertproxyServer{
+		Client: http.Client{Timeout: 10 * time.Second},
 	}
 	server := http.Server{
 		Addr: opts.Listen,

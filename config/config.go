@@ -21,7 +21,13 @@ type ProxyConfigs struct {
 	Templates []*ProxyTemplate `json:"proxyTemplates"`
 }
 
+type ProxyType string
+
+const (
+	Feishu ProxyType = "feishu"
+)
+
 type ProxyTemplate struct {
-	Type     string `json:"type"`
-	Template string `json:"template"`
+	Type     ProxyType `json:"type"`
+	Template string    `json:"template"`
 }

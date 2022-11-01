@@ -54,8 +54,6 @@ func (resp FeishuResp) String() string {
 	return string(bts)
 }
 
-const alertProxyFeishu = "feishu"
-
 // copy from feishu
 func GenSign(secret string, timestamp int64) (string, error) {
 	//timestamp + key 做sha256, 再进行base64 encode
@@ -70,7 +68,7 @@ func GenSign(secret string, timestamp int64) (string, error) {
 	return signature, nil
 }
 
-func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error) {
+func (f FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error) {
 	query := oldReq.URL.Query()
 	f.URL = query.Get("url")
 	if query.Get("at") != "" {
@@ -113,7 +111,7 @@ func (f *FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Re
 // {"StatusCode":0,"StatusMessage":"","code":9499,"msg":"too many request"}
 // {"StatusCode":0,"StatusMessage":"","code":19007,"msg":"Bot Not Enabled"}
 // {"StatusCode":0,"StatusMessage":"","code":19021,"msg":"sign match fail or timestamp is not within one hour from current time"}
-func (f *FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err error) {
+func (f FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err error) {
 	obj := FeishuResp{}
 	bts, err := io.ReadAll(resp.Body)
 	if err != nil {

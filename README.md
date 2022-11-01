@@ -20,7 +20,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubegems/alertproxy/main/bund
 2. Check
 ```bash
 kubectl  get pod -n kubegems-monitoring
-NAME                                                         READY   STATUS    RESTARTS   AGE
+NAME                          READY   STATUS    RESTARTS   AGE
 alertproxy-7d6cddbc96-brcr8   1/1     Running   0          1m
 ```
 

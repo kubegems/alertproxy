@@ -29,72 +29,73 @@ import (
 	"kubegems.io/alertproxy/config"
 )
 
-type SingleAlertProxy interface {
+var alertProxyMap = map[config.ProxyType]AlertProxy{}
+
+func Init(cfgs *config.ProxyConfigs) {
+	for _, v := range cfgs.Templates {
+		if _, ok := alertProxyMap[v.Type]; ok {
+			log.Fatalf("duplicated alert proxy type: %s", v.Type)
+		}
+		tmpl := template.Must(template.New(string(v.Type)).Parse(v.Template))
+		switch v.Type {
+		case config.Feishu:
+			alertProxyMap[v.Type] = &FeishuRobot{Template: tmpl}
+		default:
+			log.Fatalf("unsupported alert proxy type: %s", v.Type)
+		}
+	}
+}
+
+type AlertProxy interface {
+	// render a new http requets
 	RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error)
 	// if err not null, should retry
 	CheckResponse(resp *http.Response) (bool, error)
 }
 
-type Alertproxy struct {
-	*config.ProxyConfigs
+type AlertproxyServer struct {
 	http.Client
 }
 
-func (p *Alertproxy) route() http.Handler {
+func (p *AlertproxyServer) route() http.Handler {
 	mux := mux.NewRouter()
 	mux = mux.StrictSlash(true)
 	mux.Methods(http.MethodPost).Path("/").HandlerFunc(p.HandelWebhook)
 	return mux
 }
 
-func NewSingleAlertProxy(tpl *config.ProxyTemplate) SingleAlertProxy {
-	tmpl := template.Must(template.New(tpl.Type).Parse(tpl.Template))
-	switch tpl.Type {
-	case alertProxyFeishu:
-		return &FeishuRobot{
-			Template: tmpl,
-		}
-	}
-	return nil
-}
-
-func (p *Alertproxy) HandelWebhook(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	ptype := query.Get("type")
-	var tpl *config.ProxyTemplate
-	for _, v := range p.ProxyConfigs.Templates {
-		if v.Type == ptype {
-			tpl = v
-		}
-	}
-	if tpl == nil {
-		ResponseError(w, errors.Errorf("template: %s not found", ptype))
-		return
-	}
-
+func (srv *AlertproxyServer) HandelWebhook(w http.ResponseWriter, r *http.Request) {
 	alerts := WebhookAlert{}
 	if err := json.NewDecoder(r.Body).Decode(&alerts); err != nil {
 		ResponseError(w, errors.Wrap(err, "decode alerts"))
 		return
 	}
-	sap := NewSingleAlertProxy(tpl)
+
+	query := r.URL.Query()
+	ptype := query.Get("type")
+	p, ok := alertProxyMap[config.ProxyType(ptype)]
+	if !ok {
+		ResponseError(w, errors.Errorf("proxy type: %s not found", ptype))
+		return
+	}
+
 	for _, alert := range alerts.Alerts {
 		start := alert.StartsAt.In(time.Local)
 		alert.StartsAt = &start
-		req, err := sap.RenderRequest(r, alert)
+		req, err := p.RenderRequest(r, alert)
 		if err != nil {
 			ResponseError(w, errors.Wrap(err, "render request"))
 			return
 		}
 
 		if err := retry.Do(func() error {
-			resp, err := p.Client.Do(req)
+			resp, err := srv.Client.Do(req)
 			if err != nil {
 				log.Println(errors.Wrap(err, "do request"))
 				return nil
 			}
 
-			shouldRetry, err := sap.CheckResponse(resp)
+			shouldRetry, err := p.CheckResponse(resp)
 			if shouldRetry {
 				return errors.Wrap(err, "check response")
 			}
