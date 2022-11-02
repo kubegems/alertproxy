@@ -1,0 +1,9 @@
+@startuml
+用户->kubegems: 1. 配置飞书告警接收器:\n飞书webhook url + 告警模板
+kubegems->alertmanager: 2. 添加webhook receiver, url:\nhttp://alert-proxy:8080\n?type=feishu&url=xxx
+Note right of alertmanager: 触发告警
+alertmanager->alertproxy: 3. 发送alertmanager\n格式的告警消息
+Note right of alertproxy: (1) 处理告警消息，获取代理类型为飞书\n(2) 用飞书模板渲染告警消息\n(3) 获取飞书地址，生成新的http request
+alertproxy->飞书机器人: 4. 发送飞书能识别的告警消息
+飞书机器人->用户: 5. 发送告警消息
+@enduml

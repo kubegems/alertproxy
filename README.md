@@ -76,13 +76,4 @@ body should be an alertmanager alert format, eg:
 
 ## Development
 
-### Build and deploy
-1. Build
-```bash
-make docker-build docker-push
-```
-
-2. Deploy
-```bash
-make deploy
-```
+Refer to [DEVELOPMENT.md](DEVELOPMENT.md)

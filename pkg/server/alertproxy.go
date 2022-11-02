@@ -49,7 +49,7 @@ func Init(cfgs *config.ProxyConfigs) {
 type AlertProxy interface {
 	// render a new http requets
 	RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error)
-	// if err not null, should retry
+	// return shouldRetry and error
 	CheckResponse(resp *http.Response) (bool, error)
 }
 
