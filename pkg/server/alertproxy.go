@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"text/template"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"kubegems.io/alertproxy/config"
@@ -39,7 +39,9 @@ func Init(cfgs *config.ProxyConfigs) {
 		tmpl := template.Must(template.New(string(v.Type)).Parse(v.Template))
 		switch v.Type {
 		case config.Feishu:
-			alertProxyMap[v.Type] = &FeishuRobot{Template: tmpl}
+			alertProxyMap[v.Type] = NewFeishuRobot(tmpl)
+		case config.AliyunMsg:
+			alertProxyMap[v.Type] = NewAliyunMsg(tmpl)
 		default:
 			log.Fatalf("unsupported alert proxy type: %s", v.Type)
 		}
@@ -48,9 +50,7 @@ func Init(cfgs *config.ProxyConfigs) {
 
 type AlertProxy interface {
 	// render a new http requets
-	RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error)
-	// return shouldRetry and error
-	CheckResponse(resp *http.Response) (bool, error)
+	DoRequest(params url.Values, alert Alert) error
 }
 
 type AlertproxyServer struct {
@@ -82,31 +82,9 @@ func (srv *AlertproxyServer) HandelWebhook(w http.ResponseWriter, r *http.Reques
 	for _, alert := range alerts.Alerts {
 		start := alert.StartsAt.In(time.Local)
 		alert.StartsAt = &start
-		req, err := p.RenderRequest(r, alert)
-		if err != nil {
-			ResponseError(w, errors.Wrap(err, "render request"))
+		if err := p.DoRequest(r.URL.Query(), alert); err != nil {
+			ResponseError(w, errors.Wrapf(err, "do request by %s", ptype))
 			return
-		}
-
-		if err := retry.Do(func() error {
-			resp, err := srv.Client.Do(req)
-			if err != nil {
-				log.Println(errors.Wrap(err, "do request"))
-				return nil
-			}
-
-			shouldRetry, err := p.CheckResponse(resp)
-			if shouldRetry {
-				return errors.Wrap(err, "check response")
-			}
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Printf("send alert to: %s, msg: %s", query.Get("url"), alert.Annotations["message"])
-			}
-			return nil
-		}, retry.Attempts(5), retry.Delay(5*time.Second)); err != nil {
-			log.Println(err)
 		}
 	}
 	ResponseOK(w, "ok")

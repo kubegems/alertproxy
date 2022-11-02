@@ -24,19 +24,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 )
 
 type FeishuRobot struct {
 	*template.Template
-	URL        string
-	At         []string
-	SignSecret string
+	Client *http.Client
+}
+
+func NewFeishuRobot(tmpl *template.Template) FeishuRobot {
+	return FeishuRobot{
+		Template: tmpl,
+		Client:   &http.Client{Timeout: 10 * time.Second},
+	}
 }
 
 type FeishuResp struct {
@@ -55,7 +63,7 @@ func (resp FeishuResp) String() string {
 }
 
 // copy from feishu
-func GenSign(secret string, timestamp int64) (string, error) {
+func genFeishuSign(secret string, timestamp int64) (string, error) {
 	//timestamp + key 做sha256, 再进行base64 encode
 	stringToSign := fmt.Sprintf("%v", timestamp) + "\n" + secret
 	var data []byte
@@ -68,13 +76,7 @@ func GenSign(secret string, timestamp int64) (string, error) {
 	return signature, nil
 }
 
-func (f FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Request, error) {
-	query := oldReq.URL.Query()
-	f.URL = query.Get("url")
-	if query.Get("at") != "" {
-		f.At = strings.Split(query.Get("at"), ",")
-	}
-
+func (f FeishuRobot) DoRequest(params url.Values, alert Alert) error {
 	obj := struct {
 		Alert
 		// for template
@@ -83,35 +85,57 @@ func (f FeishuRobot) RenderRequest(oldReq *http.Request, alert Alert) (*http.Req
 		Sign      string
 	}{
 		Alert: alert,
-		At:    f.At,
 	}
 
-	f.SignSecret = query.Get("signSecret")
-	if f.SignSecret != "" {
+	if params.Get("at") != "" {
+		obj.At = strings.Split(params.Get("at"), ",")
+	}
+	if params.Get("signSecret") != "" {
 		obj.Timestamp = time.Now().Unix()
-		sign, err := GenSign(f.SignSecret, obj.Timestamp)
+		sign, err := genFeishuSign(params.Get("signSecret"), obj.Timestamp)
 		if err != nil {
-			return nil, errors.Wrap(err, "gen sign")
+			return errors.Wrap(err, "gen sign")
 		}
 		obj.Sign = sign
 	}
 
 	buf := bytes.NewBuffer([]byte{})
 	if err := f.Template.Execute(buf, obj); err != nil {
-		return nil, err
+		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, f.URL, buf)
+	req, err := http.NewRequest(http.MethodPost, params.Get("url"), buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	return req, nil
+
+	if err := retry.Do(func() error {
+		resp, err := f.Client.Do(req)
+		if err != nil {
+			log.Println(errors.Wrap(err, "do request"))
+			return nil
+		}
+
+		shouldRetry, err := checkFeishuResponse(resp)
+		if shouldRetry {
+			return errors.Wrap(err, "check response")
+		}
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Printf("send alert to: %s, msg: %s", params.Get("url"), alert.Annotations["message"])
+		}
+		return nil
+	}, retry.Attempts(5), retry.Delay(5*time.Second)); err != nil {
+		log.Println(err)
+	}
+	return nil
 }
 
 // {"StatusCode":0,"StatusMessage":"","code":9499,"msg":"too many request"}
 // {"StatusCode":0,"StatusMessage":"","code":19007,"msg":"Bot Not Enabled"}
 // {"StatusCode":0,"StatusMessage":"","code":19021,"msg":"sign match fail or timestamp is not within one hour from current time"}
-func (f FeishuRobot) CheckResponse(resp *http.Response) (shouldRetry bool, err error) {
+func checkFeishuResponse(resp *http.Response) (shouldRetry bool, err error) {
 	obj := FeishuResp{}
 	bts, err := io.ReadAll(resp.Body)
 	if err != nil {
