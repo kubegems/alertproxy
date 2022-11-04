@@ -42,6 +42,8 @@ func Init(cfgs *config.ProxyConfigs) {
 			alertProxyMap[v.Type] = NewFeishuRobot(tmpl)
 		case config.AliyunMsg:
 			alertProxyMap[v.Type] = NewAliyunMsg(tmpl)
+		case config.AliyunVoice:
+			alertProxyMap[v.Type] = NewAliyunVoice(tmpl)
 		default:
 			log.Fatalf("unsupported alert proxy type: %s", v.Type)
 		}

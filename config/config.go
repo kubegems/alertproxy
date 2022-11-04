@@ -24,8 +24,9 @@ type ProxyConfigs struct {
 type ProxyType string
 
 const (
-	Feishu    ProxyType = "feishu"
-	AliyunMsg ProxyType = "aliyunMsg"
+	Feishu      ProxyType = "feishu"
+	AliyunMsg   ProxyType = "aliyunMsg"
+	AliyunVoice ProxyType = "aliyunVoice"
 )
 
 type ProxyTemplate struct {

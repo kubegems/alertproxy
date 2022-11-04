@@ -22,30 +22,28 @@ import (
 	"net/url"
 	"text/template"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/dyvmsapi"
 	"github.com/pkg/errors"
 )
 
-type AliyunMsg struct {
+type AliyunVoice struct {
 	*template.Template
 }
 
-func NewAliyunMsg(tmpl *template.Template) AliyunMsg {
-	return AliyunMsg{
+func NewAliyunVoice(tmpl *template.Template) AliyunVoice {
+	return AliyunVoice{
 		Template: tmpl,
 	}
 }
 
-func (f AliyunMsg) DoRequest(params url.Values, alert Alert) error {
-	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", params.Get("accessKeyId"), params.Get("accessKeySecret"))
+func (f AliyunVoice) DoRequest(params url.Values, alert Alert) error {
+	client, err := dyvmsapi.NewClientWithAccessKey("cn-hangzhou", params.Get("accessKeyId"), params.Get("accessKeySecret"))
 	if err != nil {
 		return err
 	}
-	request := dysmsapi.CreateSendSmsRequest()
-	request.Scheme = "https"
-	request.PhoneNumbers = params.Get("phoneNumbers")
-	request.SignName = params.Get("signName")
-	request.TemplateCode = params.Get("templateCode")
+	request := dyvmsapi.CreateSingleCallByTtsRequest()
+	request.CalledNumber = params.Get("callNumber")
+	request.TtsCode = params.Get("ttsCode")
 
 	obj := struct {
 		Alert
@@ -56,12 +54,13 @@ func (f AliyunMsg) DoRequest(params url.Values, alert Alert) error {
 	if err := f.Template.Execute(buf, obj); err != nil {
 		return err
 	}
-	request.TemplateParam = buf.String()
+	request.TtsParam = buf.String()
 
-	resp, err := client.SendSms(request)
+	resp, err := client.SingleCallByTts(request)
 	if err != nil {
-		return errors.Wrap(err, "SendSms")
+		return errors.Wrap(err, "SingleCallByTts")
 	}
-	log.Printf("send alert to phoneNumbers: %s, msg: %s, resp:\n%+v", request.PhoneNumbers, alert.Annotations["message"], resp)
+
+	log.Printf("send alert to phone number: %s by phone call, msg: %s, resp:\n%+v", request.CalledNumber, alert.Annotations["message"], resp)
 	return nil
 }
