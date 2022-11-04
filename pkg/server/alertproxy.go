@@ -51,7 +51,7 @@ func Init(cfgs *config.ProxyConfigs) {
 }
 
 type AlertProxy interface {
-	// render a new http requets
+	// Do a new alert requet
 	DoRequest(params url.Values, alert Alert) error
 }
 

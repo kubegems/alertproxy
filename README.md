@@ -3,9 +3,10 @@
 This project is an alert proxy for alertmanager's webhook alert.
 
 We planed to support alert channels below:
-- [x] Feishu robot
-- [ ] Dingding robot
-- [ ] Aliyun
+- [x] Feishu Robot
+- [x] Aliyun Msg
+- [x] Aliyun Voice
+- [ ] Dingding Robot
 - [ ] ...
 
 ## Getting Started
