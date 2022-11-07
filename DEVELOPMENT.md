@@ -13,7 +13,7 @@ type AlertProxy interface {
 }
 ```
 - `DoRequest`用来提取本次webhook的数据，并通过你的AlertProxy实例中的模板及原生告警内容，渲染生成新的http request，然后使用自己的客户端发起请求。
-1. 在`Init()`函数中注册该告警代理
+2. 在`Init()`函数中注册该告警代理
 ```go
 func Init(cfgs *config.ProxyConfigs) {
 	for _, v := range cfgs.Templates {
