@@ -142,7 +142,7 @@ func checkFeishuResponse(resp *http.Response) (shouldRetry bool, err error) {
 		return false, err
 	}
 	if err := json.Unmarshal(bts, &obj); err != nil {
-		return false, err
+		return false, errors.Wrapf(err, "unmarshal feishu resp, body: %s", string(bts))
 	}
 	if obj.StatusCode != 0 || obj.Code != 0 {
 		if obj.Code == 9499 { // too many request
