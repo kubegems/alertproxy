@@ -79,7 +79,7 @@ spec:
         - serve
         - --config
         - config/alertproxy.yaml
-        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.2.0
+        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.3.0
         imagePullPolicy: IfNotPresent
         name: alertproxy
         ports:
