@@ -21,6 +21,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"text/template"
 	"time"
 
@@ -84,6 +85,10 @@ func (srv *AlertproxyServer) HandelWebhook(w http.ResponseWriter, r *http.Reques
 	for _, alert := range alerts.Alerts {
 		start := alert.StartsAt.In(time.Local)
 		alert.StartsAt = &start
+		if msg, ok := alert.Annotations["message"]; ok {
+			// 为 " 转义
+			alert.Annotations["message"] = strings.ReplaceAll(msg, `"`, `\"`)
+		}
 		if err := p.DoRequest(r.URL.Query(), alert); err != nil {
 			ResponseError(w, errors.Wrapf(err, "do request by %s", ptype))
 			return
