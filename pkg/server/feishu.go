@@ -126,7 +126,9 @@ func (f FeishuRobot) DoRequest(params url.Values, alert Alert) error {
 			log.Printf("send alert to: %s, msg: %s", params.Get("url"), alert.Annotations["message"])
 		}
 		return nil
-	}, retry.Attempts(5), retry.Delay(5*time.Second)); err != nil {
+	}, retry.Attempts(5), retry.Delay(5*time.Second), retry.OnRetry(func(n uint, err error) {
+		log.Printf("retry %d: %s\n", n, err)
+	})); err != nil {
 		log.Println(err)
 	}
 	return nil
