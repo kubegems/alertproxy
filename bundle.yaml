@@ -29,8 +29,19 @@ data:
     \"lark_md\"\n              }\n            }\n          ],\n          \"header\":
     {\n            \"template\": \"red\",\n            \"title\": {\n              \"content\":
     \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}\",\n              \"tag\":
-    \"plain_text\"\n            }\n          }\n        }\n      }\n  - type: aliyunMsg\n
-    \   template: |\n      {\n        \"alert\": \"{{ .Alert.Labels.gems_alertname
+    \"plain_text\"\n            }\n          }\n        }\n      }\n  - type: dingding\n
+    \   template: |\n      {\n          \"at\": {\n              \"atMobiles\":[{{
+    range $index, $element := .AtMobiles }}{{if $index}},{{end}}\"{{ $element }}\"{{
+    end }}],\n              \"isAtAll\": false\n          },\n          \"markdown\":
+    {\n              \"title\":\"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
+    }}\",\n              \"text\": \"## \U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
+    }} \\n\\n \U0001F550 开始时间: {{ .Alert.StartsAt.Format \"2006-01-02T15:04:05Z07:00\"
+    }} \\n\\n {{ if eq .Alert.Labels.severity \"critical\" }}\U0001F7E3{{ else }}\U0001F534{{
+    end }} 级别: {{ .Alert.Labels.severity }} \\n\\n ☸️ 集群: {{ .Alert.Labels.cluster
+    }} \\n\\n \U0001F3E0 命名空间: {{ .Alert.Labels.gems_namespace }} \\n\\n {{ .Alert.Annotations.message
+    }} \\n\\n {{ range $index, $element := .AtMobiles }}{{if $index}} {{end}}@{{ $element
+    }}{{ end }}\"\n          },\n          \"msgtype\":\"markdown\"\n      }\n  -
+    type: aliyunMsg\n    template: |\n      {\n        \"alert\": \"{{ .Alert.Labels.gems_alertname
     }}\",\n        \"time\": \"{{ .Alert.StartsAt.Format \"2006-01-02 15:04:05\" }}\",\n
     \       \"number\": \"1\",\n        \"detail\": \"{{ .Alert.Annotations.message
     }}\"\n      }\n  - type: aliyunVoice\n    template: |\n      {\n        \"alert\":
@@ -79,7 +90,7 @@ spec:
         - serve
         - --config
         - config/alertproxy.yaml
-        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.3.1
+        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.4.0
         imagePullPolicy: IfNotPresent
         name: alertproxy
         ports:

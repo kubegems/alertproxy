@@ -25,6 +25,7 @@ type ProxyType string
 
 const (
 	Feishu      ProxyType = "feishu"
+	DingDing    ProxyType = "dingding"
 	AliyunMsg   ProxyType = "aliyunMsg"
 	AliyunVoice ProxyType = "aliyunVoice"
 )

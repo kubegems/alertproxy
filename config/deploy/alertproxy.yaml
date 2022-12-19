@@ -74,6 +74,19 @@ proxyTemplates:
           }
         }
       }
+  - type: dingding
+    template: |
+      {
+          "at": {
+              "atMobiles":[{{ range $index, $element := .AtMobiles }}{{if $index}},{{end}}"{{ $element }}"{{ end }}],
+              "isAtAll": false
+          },
+          "markdown": {
+              "title":"🔥 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}",
+              "text": "## 🔥 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }} \n\n 🕐 开始时间: {{ .Alert.StartsAt.Format "2006-01-02T15:04:05Z07:00" }} \n\n {{ if eq .Alert.Labels.severity "critical" }}🟣{{ else }}🔴{{ end }} 级别: {{ .Alert.Labels.severity }} \n\n ☸️ 集群: {{ .Alert.Labels.cluster }} \n\n 🏠 命名空间: {{ .Alert.Labels.gems_namespace }} \n\n {{ .Alert.Annotations.message }} \n\n {{ range $index, $element := .AtMobiles }}{{if $index}} {{end}}@{{ $element }}{{ end }}"
+          },
+          "msgtype":"markdown"
+      }
   - type: aliyunMsg
     template: |
       {

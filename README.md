@@ -6,7 +6,7 @@ We planed to support alert channels below:
 - [x] Feishu Robot
 - [x] Aliyun Msg
 - [x] Aliyun Voice
-- [ ] Dingding Robot
+- [x] Dingding Robot
 - [ ] ...
 
 ## Getting Started

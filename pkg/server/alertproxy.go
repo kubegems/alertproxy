@@ -41,6 +41,8 @@ func Init(cfgs *config.ProxyConfigs) {
 		switch v.Type {
 		case config.Feishu:
 			alertProxyMap[v.Type] = NewFeishuRobot(tmpl)
+		case config.DingDing:
+			alertProxyMap[v.Type] = NewDingdingRobot(tmpl)
 		case config.AliyunMsg:
 			alertProxyMap[v.Type] = NewAliyunMsg(tmpl)
 		case config.AliyunVoice:
