@@ -18,19 +18,22 @@ data:
     \                 }\n                },\n                {\n                  \"is_short\":
     true,\n                  \"text\": {\n                    \"content\": \"**\U0001F3E0
     命名空间: **{{ .Alert.Labels.gems_namespace }}\",\n                    \"tag\": \"lark_md\"\n
-    \                 }\n                }{{ $length := len .At }}{{ if gt $length
-    0 }},\n                {\n                  \"is_short\": true,\n                  \"text\":
-    {\n                    \"content\": \"**\U0001F464 责任人: **{{ range .At }}<at id={{
-    . }}></at>{{ end }}\",\n                    \"tag\": \"lark_md\"\n                  }\n
-    \               }\n                {{- end -}}\n              ],\n              \"tag\":
-    \"div\"\n            },          \n            {\n              \"tag\": \"hr\"\n
-    \           },\n            {\n              \"tag\": \"div\",\n              \"text\":
-    {\n                \"content\": \"{{ .Alert.Annotations.message }}\",\n                \"tag\":
-    \"lark_md\"\n              }\n            }\n          ],\n          \"header\":
-    {\n            \"template\": \"red\",\n            \"title\": {\n              \"content\":
-    \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}\",\n              \"tag\":
-    \"plain_text\"\n            }\n          }\n        }\n      }\n  - type: dingding\n
-    \   template: |\n      {\n          \"at\": {\n              \"atMobiles\":[{{
+    \                 }\n                },\n                {\n                  \"is_short\":
+    true,\n                  \"text\": {\n                    \"content\": \"**{{
+    if eq .Alert.Status \"firing\" }}\U0001F534{{ else }}\U0001F7E2{{ end }} 状态: **{{
+    .Alert.Status }}\",\n                    \"tag\": \"lark_md\"\n                  }\n
+    \               }{{ $length := len .At }}{{ if gt $length 0 }},\n                {\n
+    \                 \"is_short\": true,\n                  \"text\": {\n                    \"content\":
+    \"**\U0001F464 责任人: **{{ range .At }}<at id={{ . }}></at>{{ end }}\",\n                    \"tag\":
+    \"lark_md\"\n                  }\n                }\n                {{- end -}}\n
+    \             ],\n              \"tag\": \"div\"\n            },          \n            {\n
+    \             \"tag\": \"hr\"\n            },\n            {\n              \"tag\":
+    \"div\",\n              \"text\": {\n                \"content\": \"{{ .Alert.Annotations.message
+    }}\",\n                \"tag\": \"lark_md\"\n              }\n            }\n
+    \         ],\n          \"header\": {\n            \"template\": \"red\",\n            \"title\":
+    {\n              \"content\": \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
+    }}\",\n              \"tag\": \"plain_text\"\n            }\n          }\n        }\n
+    \     }\n  - type: dingding\n    template: |\n      {\n          \"at\": {\n              \"atMobiles\":[{{
     range $index, $element := .AtMobiles }}{{if $index}},{{end}}\"{{ $element }}\"{{
     end }}],\n              \"isAtAll\": false\n          },\n          \"markdown\":
     {\n              \"title\":\"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
@@ -90,7 +93,7 @@ spec:
         - serve
         - --config
         - config/alertproxy.yaml
-        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.4.0
+        image: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy:v0.4.1
         imagePullPolicy: IfNotPresent
         name: alertproxy
         ports:

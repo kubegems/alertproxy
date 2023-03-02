@@ -42,6 +42,13 @@ proxyTemplates:
                     "content": "**🏠 命名空间: **{{ .Alert.Labels.gems_namespace }}",
                     "tag": "lark_md"
                   }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**{{ if eq .Alert.Status "firing" }}🔴{{ else }}🟢{{ end }} 状态: **{{ .Alert.Status }}",
+                    "tag": "lark_md"
+                  }
                 }{{ $length := len .At }}{{ if gt $length 0 }},
                 {
                   "is_short": true,
