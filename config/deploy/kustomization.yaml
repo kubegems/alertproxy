@@ -15,4 +15,4 @@ kind: Kustomization
 images:
 - name: alertproxy
   newName: registry.cn-beijing.aliyuncs.com/kubegems/alertproxy
-  newTag: v0.4.1
+  newTag: v0.4.2

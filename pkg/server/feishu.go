@@ -103,6 +103,8 @@ func (f FeishuRobot) DoRequest(params url.Values, alert Alert) error {
 	if err := f.Template.Execute(buf, obj); err != nil {
 		return err
 	}
+	bodyStr := buf.String() // used for debug
+
 	req, err := http.NewRequest(http.MethodPost, params.Get("url"), buf)
 	if err != nil {
 		return err
@@ -121,7 +123,7 @@ func (f FeishuRobot) DoRequest(params url.Values, alert Alert) error {
 			return errors.Wrap(err, "check response")
 		}
 		if err != nil {
-			log.Println(err)
+			log.Printf("send alert to: %s failed: %v, msg: %s, body: %s", params.Get("url"), err, alert.Annotations["message"], bodyStr)
 		} else {
 			log.Printf("send alert to: %s, msg: %s", params.Get("url"), alert.Annotations["message"])
 		}
