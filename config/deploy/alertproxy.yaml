@@ -73,7 +73,7 @@ proxyTemplates:
             }
           ],
           "header": {
-            "template": "red",
+            "template": "{{ if eq .Alert.Status "firing" }}red{{ else }}green{{ end }}",
             "title": {
               "content": "🔥 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}",
               "tag": "plain_text"

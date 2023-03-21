@@ -30,10 +30,11 @@ data:
     \             \"tag\": \"hr\"\n            },\n            {\n              \"tag\":
     \"div\",\n              \"text\": {\n                \"content\": \"{{ .Alert.Annotations.message
     }}\",\n                \"tag\": \"lark_md\"\n              }\n            }\n
-    \         ],\n          \"header\": {\n            \"template\": \"red\",\n            \"title\":
-    {\n              \"content\": \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
-    }}\",\n              \"tag\": \"plain_text\"\n            }\n          }\n        }\n
-    \     }\n  - type: dingding\n    template: |\n      {\n          \"at\": {\n              \"atMobiles\":[{{
+    \         ],\n          \"header\": {\n            \"template\": \"{{ if eq .Alert.Status
+    \"firing\" }}red{{ else }}green{{ end }}\",\n            \"title\": {\n              \"content\":
+    \"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname }}\",\n              \"tag\":
+    \"plain_text\"\n            }\n          }\n        }\n      }\n  - type: dingding\n
+    \   template: |\n      {\n          \"at\": {\n              \"atMobiles\":[{{
     range $index, $element := .AtMobiles }}{{if $index}},{{end}}\"{{ $element }}\"{{
     end }}],\n              \"isAtAll\": false\n          },\n          \"markdown\":
     {\n              \"title\":\"\U0001F525 [KubeGems告警中心] - {{ .Alert.Labels.gems_alertname
